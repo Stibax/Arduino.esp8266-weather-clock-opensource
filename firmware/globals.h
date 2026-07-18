@@ -63,6 +63,9 @@ extern int ntpAttempts;
 extern int ntpSuccesses;
 extern bool internetConnected;
 
+// OTA state
+extern bool otaInProgress;
+
 // Weather and sun data
 extern WeatherData weather;
 extern SunTimes sunTimes;
@@ -87,6 +90,7 @@ void ICACHE_FLASH_ATTR safeStringCopy(const String& src, char* dest, size_t maxL
 bool isDST(unsigned long epochTime);
 long getTotalOffset(unsigned long epochTime);
 unsigned long getAsyncEpoch();
+bool ICACHE_FLASH_ATTR isNightModeActive(unsigned long localTime);
 void sendNTPRequestAsync();
 void processNTPResponse();
 void ICACHE_FLASH_ATTR updateNTPTime();

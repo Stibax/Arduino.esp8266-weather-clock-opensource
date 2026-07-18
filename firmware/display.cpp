@@ -1,9 +1,11 @@
 /*
  * display.cpp - Display functions for OLED
- * TJ-56-654 Weather Clock v1.9.3
+ * TJ-56-654 Weather Clock v1.10.0
  */
 
 #include "globals.h"
+
+static bool displayIsOff = false;
 
 // Update main time display
 void ICACHE_FLASH_ATTR updateDisplay() {
@@ -229,6 +231,32 @@ void ICACHE_FLASH_ATTR applyDissolveEffect(uint8_t hidePercent, bool withDrift) 
 void ICACHE_FLASH_ATTR updateDisplayRotation() {
   unsigned long now = millis();
   unsigned long interval = config.display_rotation_sec * 1000UL;
+
+  // Night mode: turn off the display during the configured night window.
+  // OTA updates keep the display ON so the user sees progress feedback.
+  if (config.night_mode_enabled && !otaInProgress) {
+    bool hasTime = timeClient.isTimeSet() || timeIsSynced;
+    bool nightActive = false;
+    if (hasTime) {
+      unsigned long epochTime = timeIsSynced ? getAsyncEpoch() : timeClient.getEpochTime();
+      unsigned long localTime = epochTime + getTotalOffset(epochTime);
+      nightActive = isNightModeActive(localTime);
+    }
+    if (nightActive) {
+      if (!displayIsOff) {
+        display.ssd1306_command(SSD1306_DISPLAYOFF);
+        displayIsOff = true;
+      }
+      return;
+    } else if (displayIsOff) {
+      display.ssd1306_command(SSD1306_DISPLAYON);
+      displayIsOff = false;
+    }
+  } else if (displayIsOff) {
+    // Night mode disabled or OTA in progress: make sure display is on
+    display.ssd1306_command(SSD1306_DISPLAYON);
+    displayIsOff = false;
+  }
 
   // Handle active dissolve transition (two phases)
   if (inTransition) {

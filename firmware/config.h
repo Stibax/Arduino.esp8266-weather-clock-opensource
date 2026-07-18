@@ -9,7 +9,7 @@
 #include <Arduino.h>
 
 // Firmware version
-#define FIRMWARE_VERSION "1.9.3"
+#define FIRMWARE_VERSION "1.10.0"
 
 // OLED I2C Configuration
 #define I2C_SDA 0  // GPIO0 (I2C Data) - SWAPPED!
@@ -46,6 +46,13 @@ struct Config {
   bool show_weather = true;
   bool show_sunrise_sunset = true;
   uint8_t display_orientation = 2;  // 0=0°, 1=90°, 2=180°, 3=270°
+
+  // Night Mode settings
+  bool night_mode_enabled = false;
+  uint8_t night_start_hour = 23;   // 0-23
+  uint8_t night_start_minute = 0;  // 0-59
+  uint8_t night_end_hour = 7;      // 0-23
+  uint8_t night_end_minute = 0;    // 0-59
 };
 
 // Exponential backoff retry configuration (for NTP/Weather)

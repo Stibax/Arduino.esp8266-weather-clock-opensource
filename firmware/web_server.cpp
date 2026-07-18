@@ -278,6 +278,24 @@ void ICACHE_FLASH_ATTR handleConfig() {
   server.sendContent_P(PSTR("<h2 style='margin-top:20px;'>Display Settings</h2>"));
   snprintf_P(buf, sizeof(buf), PSTR("<label>Screen Rotation Interval (seconds):</label><input type='number' name='display_rotation_sec' value='%u'>"), config.display_rotation_sec);
   server.sendContent(buf);
+  snprintf_P(buf, sizeof(buf), PSTR("<label>Display Orientation (0-3):</label><input type='number' name='display_orientation' min='0' max='3' value='%u'>"), config.display_orientation);
+  server.sendContent(buf);
+  snprintf_P(buf, sizeof(buf), PSTR("<label><input type='checkbox' name='show_weather' value='1' %s> Show weather screen</label>"), config.show_weather ? "checked" : "");
+  server.sendContent(buf);
+  snprintf_P(buf, sizeof(buf), PSTR("<label><input type='checkbox' name='show_sunrise_sunset' value='1' %s> Show sunrise/sunset screen</label>"), config.show_sunrise_sunset ? "checked" : "");
+  server.sendContent(buf);
+
+  server.sendContent_P(PSTR("<h2 style='margin-top:20px;'>Night Mode</h2>"));
+  snprintf_P(buf, sizeof(buf), PSTR("<label><input type='checkbox' name='night_mode_enabled' value='1' %s> Enable Night Mode</label>"), config.night_mode_enabled ? "checked" : "");
+  server.sendContent(buf);
+  snprintf_P(buf, sizeof(buf), PSTR("<label>Start Hour (0-23):</label><input type='number' name='night_start_hour' min='0' max='23' value='%u'>"), config.night_start_hour);
+  server.sendContent(buf);
+  snprintf_P(buf, sizeof(buf), PSTR("<label>Start Minute (0-59):</label><input type='number' name='night_start_minute' min='0' max='59' value='%u'>"), config.night_start_minute);
+  server.sendContent(buf);
+  snprintf_P(buf, sizeof(buf), PSTR("<label>End Hour (0-23):</label><input type='number' name='night_end_hour' min='0' max='23' value='%u'>"), config.night_end_hour);
+  server.sendContent(buf);
+  snprintf_P(buf, sizeof(buf), PSTR("<label>End Minute (0-59):</label><input type='number' name='night_end_minute' min='0' max='59' value='%u'>"), config.night_end_minute);
+  server.sendContent(buf);
 
   server.sendContent_P(CONFIG_HTML_FOOTER);
   server.sendContent("");
@@ -318,6 +336,26 @@ void ICACHE_FLASH_ATTR handleConfigSave() {
     config.display_orientation = server.arg("display_orientation").toInt();
     display.setRotation(config.display_orientation);
   }
+  config.show_weather = server.hasArg("show_weather");
+  config.show_sunrise_sunset = server.hasArg("show_sunrise_sunset");
+
+  config.night_mode_enabled = server.hasArg("night_mode_enabled");
+  if (server.hasArg("night_start_hour")) {
+    config.night_start_hour = server.arg("night_start_hour").toInt();
+  }
+  if (server.hasArg("night_start_minute")) {
+    config.night_start_minute = server.arg("night_start_minute").toInt();
+  }
+  if (server.hasArg("night_end_hour")) {
+    config.night_end_hour = server.arg("night_end_hour").toInt();
+  }
+  if (server.hasArg("night_end_minute")) {
+    config.night_end_minute = server.arg("night_end_minute").toInt();
+  }
+  config.night_start_hour = constrain(config.night_start_hour, 0, 23);
+  config.night_start_minute = constrain(config.night_start_minute, 0, 59);
+  config.night_end_hour = constrain(config.night_end_hour, 0, 23);
+  config.night_end_minute = constrain(config.night_end_minute, 0, 59);
 
   saveConfig();
 
@@ -421,7 +459,13 @@ void ICACHE_FLASH_ATTR handleAPIConfigExport() {
   json += "\"weather_interval\":" + String(config.weather_interval) + ",";
   json += "\"display_rotation_sec\":" + String(config.display_rotation_sec) + ",";
   json += "\"show_weather\":" + String(config.show_weather ? "true" : "false") + ",";
-  json += "\"show_sunrise_sunset\":" + String(config.show_sunrise_sunset ? "true" : "false");
+  json += "\"show_sunrise_sunset\":" + String(config.show_sunrise_sunset ? "true" : "false") + ",";
+  json += "\"display_orientation\":" + String(config.display_orientation) + ",";
+  json += "\"night_mode_enabled\":" + String(config.night_mode_enabled ? "true" : "false") + ",";
+  json += "\"night_start_hour\":" + String(config.night_start_hour) + ",";
+  json += "\"night_start_minute\":" + String(config.night_start_minute) + ",";
+  json += "\"night_end_hour\":" + String(config.night_end_hour) + ",";
+  json += "\"night_end_minute\":" + String(config.night_end_minute);
   json += "}";
 
   server.sendHeader("Content-Disposition", "attachment; filename=clock-config.json");
@@ -515,6 +559,91 @@ void ICACHE_FLASH_ATTR handleAPIConfigImport() {
       config.longitude = body.substring(start, end).toFloat();
     }
   }
+
+  pos = body.indexOf("\"display_orientation\":");
+  if (pos >= 0) {
+    int start = pos + 22;
+    int end = body.indexOf(",", start);
+    if (end < 0) end = body.indexOf("}", start);
+    if (end > start) {
+      config.display_orientation = body.substring(start, end).toInt();
+    }
+  }
+
+  pos = body.indexOf("\"show_weather\":");
+  if (pos >= 0) {
+    int start = pos + 16;
+    int end = body.indexOf(",", start);
+    if (end < 0) end = body.indexOf("}", start);
+    if (end > start) {
+      config.show_weather = (body.substring(start, end) == "true");
+    }
+  }
+
+  pos = body.indexOf("\"show_sunrise_sunset\":");
+  if (pos >= 0) {
+    int start = pos + 23;
+    int end = body.indexOf(",", start);
+    if (end < 0) end = body.indexOf("}", start);
+    if (end > start) {
+      config.show_sunrise_sunset = (body.substring(start, end) == "true");
+    }
+  }
+
+  pos = body.indexOf("\"night_mode_enabled\":");
+  if (pos >= 0) {
+    int start = pos + 21;
+    int end = body.indexOf(",", start);
+    if (end < 0) end = body.indexOf("}", start);
+    if (end > start) {
+      config.night_mode_enabled = (body.substring(start, end) == "true");
+    }
+  }
+
+  pos = body.indexOf("\"night_start_hour\":");
+  if (pos >= 0) {
+    int start = pos + 19;
+    int end = body.indexOf(",", start);
+    if (end < 0) end = body.indexOf("}", start);
+    if (end > start) {
+      config.night_start_hour = body.substring(start, end).toInt();
+    }
+  }
+
+  pos = body.indexOf("\"night_start_minute\":");
+  if (pos >= 0) {
+    int start = pos + 21;
+    int end = body.indexOf(",", start);
+    if (end < 0) end = body.indexOf("}", start);
+    if (end > start) {
+      config.night_start_minute = body.substring(start, end).toInt();
+    }
+  }
+
+  pos = body.indexOf("\"night_end_hour\":");
+  if (pos >= 0) {
+    int start = pos + 17;
+    int end = body.indexOf(",", start);
+    if (end < 0) end = body.indexOf("}", start);
+    if (end > start) {
+      config.night_end_hour = body.substring(start, end).toInt();
+    }
+  }
+
+  pos = body.indexOf("\"night_end_minute\":");
+  if (pos >= 0) {
+    int start = pos + 19;
+    int end = body.indexOf(",", start);
+    if (end < 0) end = body.indexOf("}", start);
+    if (end > start) {
+      config.night_end_minute = body.substring(start, end).toInt();
+    }
+  }
+
+  config.night_start_hour = constrain(config.night_start_hour, 0, 23);
+  config.night_start_minute = constrain(config.night_start_minute, 0, 59);
+  config.night_end_hour = constrain(config.night_end_hour, 0, 23);
+  config.night_end_minute = constrain(config.night_end_minute, 0, 59);
 
   config.magic = CONFIG_MAGIC;
   saveConfig();

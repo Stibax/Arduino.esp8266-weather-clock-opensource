@@ -57,6 +57,19 @@ long ICACHE_FLASH_ATTR getTotalOffset(unsigned long epochTime) {
   return offset;
 }
 
+// Determine whether the current local time falls inside the configured
+// Night Mode window. The window can span midnight (start > end).
+bool ICACHE_FLASH_ATTR isNightModeActive(unsigned long localTime) {
+  int currentMinutes = (int)(((localTime / 3600) % 24) * 60 + ((localTime / 60) % 60));
+  int startMinutes = config.night_start_hour * 60 + config.night_start_minute;
+  int endMinutes = config.night_end_hour * 60 + config.night_end_minute;
+
+  if (startMinutes > endMinutes) {
+    return currentMinutes >= startMinutes || currentMinutes < endMinutes;
+  }
+  return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+}
+
 // Get current epoch (async NTP independent tracking)
 unsigned long ICACHE_FLASH_ATTR getAsyncEpoch() {
   if (!timeIsSynced) return timeClient.getEpochTime();

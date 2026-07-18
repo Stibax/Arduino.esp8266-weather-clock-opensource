@@ -1,0 +1,84 @@
+name: Build Firmware
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/build-firmware.yml'
+  pull_request:
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/build-firmware.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install arduino-cli
+        uses: arduino/setup-arduino-cli@v1
+
+      - name: Install ESP8266 core
+        run: |
+          arduino-cli core update-index --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli core install esp8266:esp8266@3.1.2 --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
+
+      - name: Install required libraries
+        run: |
+          arduino-cli lib install \
+            "Adafruit GFX Library@1.11.0" \
+            "Adafruit SSD1306@2.5.0" \
+            "NTPClient@3.2.0" \
+            "WiFiManager@2.0.0" \
+            "AsyncHTTPRequest_Generic@1.13.0" \
+            "ESPAsyncTCP@1.2.2" \
+            "ArduinoJson@6.21.5"
+
+      - name: Compile firmware
+        run: |
+          arduino-cli compile \
+            --fqbn "esp8266:esp8266:generic:eesz=1M64,FlashMode=dio,FlashFreq=40,xtal=80,CrystalFreq=26,lvl=None____,ip=lm2f" \
+            --output-dir build \
+            firmware
+
+      - name: Rename binary with version and SHA
+        run: |
+          VERSION=$(grep 'FIRMWARE_VERSION' firmware/config.h | sed 's/.*"\(.*\)".*/\1/')
+          SHORT_SHA=${GITHUB_SHA::7}
+          mkdir -p artifacts
+          cp "build/firmware.ino.bin" "artifacts/tj56654-clock-v${VERSION}-${SHORT_SHA}.bin"
+          ls -la artifacts/
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-bin
+          path: artifacts/*.bin
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download firmware artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-bin
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.bin
+          generate_release_notes: true

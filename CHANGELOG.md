@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-07-18
+
+### Added
+- **Night Mode**: scheduled display-off window to keep the room dark at night.
+  - Configurable start/end time (hour + minute, 24h).
+  - Supports windows that span midnight (e.g., 23:00 → 07:00).
+  - Can be enabled/disabled from `/config` and via `/api/config` import/export.
+- **OTA display feedback**: the OLED display is forced ON during an OTA update so progress is visible even when Night Mode would otherwise keep it off.
+- **GitHub Actions CI**: automatic `arduino-cli` build on every push/PR that touches `firmware/`.
+  - Produces a downloadable `.bin` artifact named `tj56654-clock-v<FIRMWARE_VERSION>-<short-sha>.bin`.
+  - Optional automatic GitHub Release when a `vX.Y.Z` tag is pushed.
+
+### Fixed
+- **Safe EEPROM migration for new Night Mode fields**: devices already in the field keep their stored WiFi credentials and other settings when updating from v1.9.x.
+  - Uninitialized trailing EEPROM bytes (often `0xFF`) are clamped to valid ranges on the first boot after OTA.
+  - No magic-number bump is used, so SSID/password are not lost.
+
+### Notes
+- The on-board blue LED shares GPIO2 with the OLED I2C clock (SCL). It cannot be controlled independently in software, but it stops blinking as a side effect when Night Mode turns off the display.
+
 ## [1.9.2] - 2026-01-06
 
 ### Fixed

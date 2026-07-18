@@ -99,6 +99,9 @@ unsigned long transitionStart = 0;
 unsigned long lastDissolveFrame = 0;
 uint8_t nextDisplayMode = 0;
 
+// OTA state
+bool otaInProgress = false;
+
 // ============ Helper functions ============
 
 void ICACHE_FLASH_ATTR safeStringCopy(const String& src, char* dest, size_t maxLen) {
@@ -120,6 +123,18 @@ void ICACHE_FLASH_ATTR loadConfig() {
   if (tempConfig.magic == CONFIG_MAGIC) {
     config = tempConfig;
     Serial.println("Valid configuration loaded from EEPROM");
+
+    // Clamp new Night Mode fields for safe EEPROM migration after OTA.
+    // The magic stays valid, so uninitialized trailing bytes may contain 0xFF.
+    bool needsSave = false;
+    if (config.night_start_hour > 23) { config.night_start_hour = 23; needsSave = true; }
+    if (config.night_start_minute > 59) { config.night_start_minute = 0; needsSave = true; }
+    if (config.night_end_hour > 23) { config.night_end_hour = 7; needsSave = true; }
+    if (config.night_end_minute > 59) { config.night_end_minute = 0; needsSave = true; }
+    if (needsSave) {
+      saveConfig();
+      Serial.println("Night Mode fields clamped to safe defaults");
+    }
   } else {
     Serial.println("Invalid EEPROM data, using defaults");
     config.magic = CONFIG_MAGIC;
@@ -152,22 +167,27 @@ void ICACHE_FLASH_ATTR setupOTA() {
   ArduinoOTA.onStart([]() {
     String type = (ArduinoOTA.getCommand() == U_FLASH) ? "sketch" : "filesystem";
     Serial.println("Start OTA updating " + type);
+    otaInProgress = true;
+    display.ssd1306_command(SSD1306_DISPLAYON);
     clearDisplay();
     showNumber(0, false);
   });
 
   ArduinoOTA.onEnd([]() {
     Serial.println("\nOTA Update complete!");
+    otaInProgress = false;
     showNumber(100, false);
   });
 
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
     int percent = (progress / (total / 100));
     Serial.printf("Progress: %u%%\r", percent);
+    display.ssd1306_command(SSD1306_DISPLAYON);
     showNumber(percent, false);
   });
 
   ArduinoOTA.onError([](ota_error_t error) {
+    otaInProgress = false;
     Serial.printf("Error[%u]: ", error);
     if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
     else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");

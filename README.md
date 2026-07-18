@@ -628,6 +628,18 @@ Replace polling with WebSocket for:
    - Sketch → Upload
    - No wires needed!
 
+### Pre-built Firmware (GitHub Actions)
+
+If you don't want to compile with Arduino IDE, every push that changes the `firmware/` folder is automatically built by the **Build Firmware** GitHub Action:
+
+1. Open the [Actions](../../actions/workflows/build-firmware.yml) tab.
+2. Select the latest successful run of **Build Firmware**.
+3. Download the `firmware-bin` artifact from the bottom of the page.
+4. Extract the `.bin` file.
+5. Upload it via `/update` as described above.
+
+The artifact is named `tj56654-clock-v<FIRMWARE_VERSION>-<short-sha>.bin` so you can easily match it to the version shown in `/debug`.
+
 ---
 
 ## Web Interface
@@ -664,6 +676,14 @@ Comprehensive settings form:
 - Display rotation interval (seconds)
 - Show weather screen (toggle)
 - Show sunrise/sunset screen (toggle)
+
+**Night Mode**
+- Enable/disable scheduled display off
+- Start time (hour and minute, 24h)
+- End time (hour and minute, 24h)
+- Supports windows that span midnight (e.g., 23:00 → 07:00)
+
+> **Note on the blue LED**: the on-board blue LED is wired on the same I2C SCL line as the OLED display (GPIO2), so it cannot be driven independently. When Night Mode turns the display off, I2C traffic stops and the LED stops blinking as a side effect; it is not a separately controlled feature.
 
 All settings persist to EEPROM and survive reboots.
 
@@ -769,7 +789,12 @@ Export full configuration as JSON.
   "display_rotation_sec": 5,
   "show_weather": true,
   "show_sunrise_sunset": true,
-  "display_orientation": 0
+  "display_orientation": 0,
+  "night_mode_enabled": false,
+  "night_start_hour": 23,
+  "night_start_minute": 0,
+  "night_end_hour": 7,
+  "night_end_minute": 0
 }
 ```
 
@@ -963,6 +988,6 @@ Now go make something cool. 🚀
 
 **P.S.**: If you found this useful, consider starring the repo. If you found a bug, open an issue. If you want to add Home Assistant screens, let's collaborate - I'm planning that next!
 
-**Author**: apetrochenko
-**Date**: 2026-01-06
-**Firmware Version**: v1.9.2 (Production Ready)
+**Author**: apetrochenko / Stibax fork
+**Date**: 2026-07-18
+**Firmware Version**: v1.10.0 (Production Ready)

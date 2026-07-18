@@ -112,6 +112,15 @@ void ICACHE_FLASH_ATTR safeStringCopy(const String& src, char* dest, size_t maxL
   dest[maxLen - 1] = '\0';
 }
 
+// Verify that a string stored in EEPROM is valid: printable ASCII and null-terminated.
+bool ICACHE_FLASH_ATTR isValidStoredString(const char* str, size_t maxLen) {
+  for (size_t i = 0; i < maxLen; i++) {
+    if (str[i] == '\0') return i > 0;  // Empty string is not considered valid for credentials
+    if (str[i] < 32 || str[i] > 126) return false;  // Non-printable or extended ASCII
+  }
+  return false;  // Not null-terminated within maxLen
+}
+
 // ============ EEPROM functions ============
 
 void ICACHE_FLASH_ATTR loadConfig() {
@@ -133,14 +142,14 @@ void ICACHE_FLASH_ATTR loadConfig() {
     if (config.night_end_minute > 59) { config.night_end_minute = 0; needsSave = true; }
 
     // Ensure admin credential fields are null-terminated and initialized on first boot
-    // after a firmware update that added these fields (bytes may be 0xFF from old EEPROM).
+    // after a firmware update that added these fields (bytes may be 0xFF or garbage from old EEPROM).
     config.admin_username[sizeof(config.admin_username) - 1] = '\0';
     config.admin_password[sizeof(config.admin_password) - 1] = '\0';
-    if ((uint8_t)config.admin_username[0] == 0xFF) {
+    if (!isValidStoredString(config.admin_username, sizeof(config.admin_username))) {
       safeStringCopy("admin", config.admin_username, sizeof(config.admin_username));
       needsSave = true;
     }
-    if ((uint8_t)config.admin_password[0] == 0xFF) {
+    if (!isValidStoredString(config.admin_password, sizeof(config.admin_password))) {
       safeStringCopy("admin", config.admin_password, sizeof(config.admin_password));
       needsSave = true;
     }

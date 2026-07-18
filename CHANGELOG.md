@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.1] - 2026-07-18
+
+### Fixed
+- **Admin credentials EEPROM validation**: on the first boot after updating from a firmware without admin credential fields, the device now detects invalid/garbage bytes and resets username and password to safe defaults (`admin` / `admin`) instead of showing corrupted characters.
+
 ## [1.11.0] - 2026-07-18
 
 ### Added

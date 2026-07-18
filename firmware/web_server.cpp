@@ -285,6 +285,12 @@ void ICACHE_FLASH_ATTR handleConfig() {
   snprintf_P(buf, sizeof(buf), PSTR("<label><input type='checkbox' name='show_sunrise_sunset' value='1' %s> Show sunrise/sunset screen</label>"), config.show_sunrise_sunset ? "checked" : "");
   server.sendContent(buf);
 
+  server.sendContent_P(PSTR("<h2 style='margin-top:20px;'>Admin Credentials</h2>"));
+  snprintf_P(buf, sizeof(buf), PSTR("<label>Admin Username:</label><input type='text' name='admin_username' value='%s' required>"), config.admin_username);
+  server.sendContent(buf);
+  snprintf_P(buf, sizeof(buf), PSTR("<label>Admin Password:</label><input type='text' name='admin_password' value='%s' required>"), config.admin_password);
+  server.sendContent(buf);
+
   server.sendContent_P(PSTR("<h2 style='margin-top:20px;'>Night Mode</h2>"));
   snprintf_P(buf, sizeof(buf), PSTR("<label><input type='checkbox' name='night_mode_enabled' value='1' %s> Enable Night Mode</label>"), config.night_mode_enabled ? "checked" : "");
   server.sendContent(buf);
@@ -356,6 +362,13 @@ void ICACHE_FLASH_ATTR handleConfigSave() {
   config.night_start_minute = constrain(config.night_start_minute, 0, 59);
   config.night_end_hour = constrain(config.night_end_hour, 0, 23);
   config.night_end_minute = constrain(config.night_end_minute, 0, 59);
+
+  if (server.hasArg("admin_username")) {
+    safeStringCopy(server.arg("admin_username"), config.admin_username, sizeof(config.admin_username));
+  }
+  if (server.hasArg("admin_password")) {
+    safeStringCopy(server.arg("admin_password"), config.admin_password, sizeof(config.admin_password));
+  }
 
   saveConfig();
 
@@ -465,7 +478,9 @@ void ICACHE_FLASH_ATTR handleAPIConfigExport() {
   json += "\"night_start_hour\":" + String(config.night_start_hour) + ",";
   json += "\"night_start_minute\":" + String(config.night_start_minute) + ",";
   json += "\"night_end_hour\":" + String(config.night_end_hour) + ",";
-  json += "\"night_end_minute\":" + String(config.night_end_minute);
+  json += "\"night_end_minute\":" + String(config.night_end_minute) + ",";
+  json += "\"admin_username\":\"" + String(config.admin_username) + "\",";
+  json += "\"admin_password\":\"" + String(config.admin_password) + "\"";
   json += "}";
 
   server.sendHeader("Content-Disposition", "attachment; filename=clock-config.json");
@@ -640,6 +655,24 @@ void ICACHE_FLASH_ATTR handleAPIConfigImport() {
     }
   }
 
+  pos = body.indexOf("\"admin_username\":\"");
+  if (pos >= 0) {
+    int start = pos + 19;
+    int end = body.indexOf("\"", start);
+    if (end > start) {
+      safeStringCopy(body.substring(start, end), config.admin_username, sizeof(config.admin_username));
+    }
+  }
+
+  pos = body.indexOf("\"admin_password\":\"");
+  if (pos >= 0) {
+    int start = pos + 19;
+    int end = body.indexOf("\"", start);
+    if (end > start) {
+      safeStringCopy(body.substring(start, end), config.admin_password, sizeof(config.admin_password));
+    }
+  }
+
   config.night_start_hour = constrain(config.night_start_hour, 0, 23);
   config.night_start_minute = constrain(config.night_start_minute, 0, 59);
   config.night_end_hour = constrain(config.night_end_hour, 0, 23);
@@ -712,7 +745,7 @@ void ICACHE_FLASH_ATTR handleI2CScan() {
 
 // Setup web server
 void ICACHE_FLASH_ATTR setupWebServer() {
-  httpUpdater.setup(&server, "/update", "admin", "admin");
+  httpUpdater.setup(&server, "/update", config.admin_username, config.admin_password);
 
   server.on("/", HTTP_GET, handleRoot);
   server.on("/config", HTTP_GET, handleConfig);

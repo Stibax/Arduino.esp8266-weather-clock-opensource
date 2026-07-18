@@ -131,9 +131,23 @@ void ICACHE_FLASH_ATTR loadConfig() {
     if (config.night_start_minute > 59) { config.night_start_minute = 0; needsSave = true; }
     if (config.night_end_hour > 23) { config.night_end_hour = 7; needsSave = true; }
     if (config.night_end_minute > 59) { config.night_end_minute = 0; needsSave = true; }
+
+    // Ensure admin credential fields are null-terminated and initialized on first boot
+    // after a firmware update that added these fields (bytes may be 0xFF from old EEPROM).
+    config.admin_username[sizeof(config.admin_username) - 1] = '\0';
+    config.admin_password[sizeof(config.admin_password) - 1] = '\0';
+    if ((uint8_t)config.admin_username[0] == 0xFF) {
+      safeStringCopy("admin", config.admin_username, sizeof(config.admin_username));
+      needsSave = true;
+    }
+    if ((uint8_t)config.admin_password[0] == 0xFF) {
+      safeStringCopy("admin", config.admin_password, sizeof(config.admin_password));
+      needsSave = true;
+    }
+
     if (needsSave) {
       saveConfig();
-      Serial.println("Night Mode fields clamped to safe defaults");
+      Serial.println("Night Mode / admin fields initialized to safe defaults");
     }
   } else {
     Serial.println("Invalid EEPROM data, using defaults");
@@ -163,6 +177,9 @@ void ICACHE_FLASH_ATTR saveConfig() {
 
 void ICACHE_FLASH_ATTR setupOTA() {
   ArduinoOTA.setHostname(config.hostname);
+  if (strlen(config.admin_password) > 0) {
+    ArduinoOTA.setPassword(config.admin_password);
+  }
 
   ArduinoOTA.onStart([]() {
     String type = (ArduinoOTA.getCommand() == U_FLASH) ? "sketch" : "filesystem";

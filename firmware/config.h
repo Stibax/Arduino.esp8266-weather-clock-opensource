@@ -9,7 +9,7 @@
 #include <Arduino.h>
 
 // Firmware version
-#define FIRMWARE_VERSION "1.10.0"
+#define FIRMWARE_VERSION "1.11.0"
 
 // OLED I2C Configuration
 #define I2C_SDA 0  // GPIO0 (I2C Data) - SWAPPED!
@@ -46,6 +46,10 @@ struct Config {
   bool show_weather = true;
   bool show_sunrise_sunset = true;
   uint8_t display_orientation = 2;  // 0=0°, 1=90°, 2=180°, 3=270°
+
+  // Admin credentials (used for /update and ArduinoOTA)
+  char admin_username[32] = "admin";
+  char admin_password[64] = "admin";
 
   // Night Mode settings
   bool night_mode_enabled = false;

@@ -737,6 +737,10 @@ Comprehensive settings form:
 - Show weather screen (toggle)
 - Show sunrise/sunset screen (toggle)
 
+**Admin Credentials**
+- Admin Username (for `/update` and ArduinoOTA)
+- Admin Password (for `/update` and ArduinoOTA)
+
 **Night Mode**
 - Enable/disable scheduled display off
 - Start time (hour and minute, 24h)
@@ -854,7 +858,9 @@ Export full configuration as JSON.
   "night_start_hour": 23,
   "night_start_minute": 0,
   "night_end_hour": 7,
-  "night_end_minute": 0
+  "night_end_minute": 0,
+  "admin_username": "admin",
+  "admin_password": "admin"
 }
 ```
 

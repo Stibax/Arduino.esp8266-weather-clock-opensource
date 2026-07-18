@@ -30,6 +30,7 @@ I bought a cute weather clock kit from AliExpress ([TJ-56-654](https://pt.aliexp
 - [The Journey: v1.7 → v1.9.2](#the-journey-v17--v192)
 - [What's Next: Home Assistant Integration](#whats-next-home-assistant-integration)
 - [How to Flash This Firmware](#how-to-flash-this-firmware)
+- [Night Mode](#night-mode)
 - [Web Interface](#web-interface)
 - [API Documentation](#api-documentation)
 - [Security Improvements](#security-improvements)
@@ -555,6 +556,65 @@ Replace polling with WebSocket for:
 
 ---
 
+## Night Mode
+
+Night Mode turns the OLED display **off** during a configurable time window (for example while you sleep). The clock continues to run in the background: NTP sync, weather updates, and the web interface all keep working.
+
+### Configuration
+
+You can enable and configure Night Mode from:
+
+- **Web UI**: `http://<device-ip>/config`
+- **REST API**: `GET /api/config` (export) and `POST /api/config` (import)
+
+Configurable fields:
+
+| Field | Range | Default | Description |
+|-------|-------|---------|-------------|
+| `night_mode_enabled` | `true` / `false` | `false` | Enable or disable Night Mode |
+| `night_start_hour` | `0` - `23` | `23` | Start hour (24h format) |
+| `night_start_minute` | `0` - `59` | `0` | Start minute |
+| `night_end_hour` | `0` - `23` | `7` | End hour (24h format) |
+| `night_end_minute` | `0` - `59` | `0` | End minute |
+
+The window can span midnight, so `23:00 → 07:00` works exactly as expected.
+
+### Example: set Night Mode via API
+
+```bash
+# Download current config
+curl http://192.168.x.x/api/config > clock-config.json
+
+# Edit the JSON to enable Night Mode and set a window, then upload
+curl -X POST -H "Content-Type: application/json" \
+  -d @clock-config.json \
+  http://192.168.x.x/api/config
+```
+
+Minimal example JSON:
+
+```json
+{
+  "night_mode_enabled": true,
+  "night_start_hour": 23,
+  "night_start_minute": 0,
+  "night_end_hour": 7,
+  "night_end_minute": 0
+}
+```
+
+> **Note**: `POST /api/config` merges only the fields it recognizes; unknown fields are ignored. A reboot is recommended after importing config.
+
+### LED behaviour
+
+The on-board blue LED is wired on the same I2C line as the OLED display (GPIO2/SCL). It cannot be driven independently in software, but it stops blinking as a side effect when Night Mode turns the display off.
+
+### OTA updates during Night Mode
+
+If an OTA update starts while the display is off, the firmware temporarily forces the display **on** so you can see the progress percentage. Once the update is complete, the normal Night Mode schedule resumes.
+
+---
+
 ## How to Flash This Firmware
 
 ### Requirements
@@ -800,7 +860,7 @@ Export full configuration as JSON.
 
 ### `POST /api/config`
 
-Import configuration from JSON.
+Import configuration from JSON. You can use this to enable/disable Night Mode, change the schedule, or update any other setting.
 
 **Request Body**: Same structure as export response (password field optional for security).
 

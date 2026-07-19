@@ -208,6 +208,7 @@ Three rotating display screens (configurable interval):
 2. **Weather Mode**
    - Temperature with superscript °c
    - City name
+   - 16×16 weather icon based on Open-Meteo `weathercode` (sun, cloud/fog, rain, snow, thunder)
    - Clean, minimalist layout
 
 3. **Sunrise/Sunset Mode**

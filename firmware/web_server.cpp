@@ -288,7 +288,7 @@ void ICACHE_FLASH_ATTR handleConfig() {
   server.sendContent_P(PSTR("<h2 style='margin-top:20px;'>Admin Credentials</h2>"));
   snprintf_P(buf, sizeof(buf), PSTR("<label>Admin Username:</label><input type='text' name='admin_username' value='%s' required>"), config.admin_username);
   server.sendContent(buf);
-  snprintf_P(buf, sizeof(buf), PSTR("<label>Admin Password:</label><input type='text' name='admin_password' value='%s' required>"), config.admin_password);
+  snprintf_P(buf, sizeof(buf), PSTR("<label>Admin Password:</label><input type='password' name='admin_password' value='%s' required>"), config.admin_password);
   server.sendContent(buf);
 
   server.sendContent_P(PSTR("<h2 style='margin-top:20px;'>Night Mode</h2>"));

@@ -1,11 +1,32 @@
 /*
  * display.cpp - Display functions for OLED
- * TJ-56-654 Weather Clock v1.10.0
+ * TJ-56-654 Weather Clock v2.0.0.0
  */
 
 #include "globals.h"
+#include "icons.h"
 
 static bool displayIsOff = false;
+
+// Map Open-Meteo WMO weather code to a 16x16 icon bitmap
+const uint8_t* ICACHE_FLASH_ATTR getWeatherIcon(int weathercode) {
+  switch (weathercode) {
+    case 0: case 1: case 2: case 3:
+      return weather_sun;
+    case 45: case 48:
+      return weather_fog;
+    case 51: case 53: case 55: case 56: case 57:
+    case 61: case 63: case 65: case 66: case 67:
+    case 80: case 81: case 82:
+      return weather_rain;
+    case 71: case 73: case 75: case 77: case 85: case 86:
+      return weather_snow;
+    case 95: case 96: case 99:
+      return weather_thunder;
+    default:
+      return weather_sun;
+  }
+}
 
 // Update main time display
 void ICACHE_FLASH_ATTR updateDisplay() {
@@ -113,6 +134,9 @@ void ICACHE_FLASH_ATTR displayWeather() {
     }
     return;
   }
+
+  // Draw small weather icon in top-left corner
+  display.drawBitmap(0, 0, getWeatherIcon(weather.weathercode), ICON_WIDTH, ICON_HEIGHT, SSD1306_WHITE);
 
   // === YELLOW ZONE (Y: 48-63): City name (size 2 = 16px) ===
   display.setTextSize(2);

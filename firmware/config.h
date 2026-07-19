@@ -9,7 +9,7 @@
 #include <Arduino.h>
 
 // Firmware version
-#define FIRMWARE_VERSION "2.0.0"
+#define FIRMWARE_VERSION "2.1.0"
 
 // OLED I2C Configuration
 #define I2C_SDA 0  // GPIO0 (I2C Data) - SWAPPED!

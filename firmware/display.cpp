@@ -14,7 +14,7 @@ const uint8_t* ICACHE_FLASH_ATTR getWeatherIcon(int weathercode) {
     case 0: case 1: case 2: case 3:
       return weather_sun;
     case 45: case 48:
-      return weather_fog;
+      return weather_cloud_fog;
     case 51: case 53: case 55: case 56: case 57:
     case 61: case 63: case 65: case 66: case 67:
     case 80: case 81: case 82:
@@ -174,6 +174,31 @@ void ICACHE_FLASH_ATTR displayWeather() {
   }
 }
 
+// Big weather icon display
+void ICACHE_FLASH_ATTR displayBigWeatherIcon() {
+  display.clearDisplay();
+
+  if (!weather.valid) {
+    display.setTextSize(2);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(20, 28);
+    display.println("No Data");
+    if (!inTransition) {
+      display.display();
+    }
+    return;
+  }
+
+  const uint8_t* icon = getWeatherIcon(weather.weathercode);
+  int16_t x = (SCREEN_WIDTH - 64) / 2;
+  int16_t y = (SCREEN_HEIGHT - 64) / 2;
+
+  display.drawBitmap(x, y, icon, 64, 64, SSD1306_WHITE);
+  if (!inTransition) {
+    display.display();
+  }
+}
+
 // Sunrise/Sunset display
 void ICACHE_FLASH_ATTR displaySunTimes() {
   display.clearDisplay();
@@ -319,6 +344,7 @@ void ICACHE_FLASH_ATTR updateDisplayRotation() {
       case 0: updateDisplay(); break;
       case 1: displayWeather(); break;
       case 2: displaySunTimes(); break;
+      case 3: displayBigWeatherIcon(); break;
     }
 
     applyDissolveEffect(hidePercent, isDriftPhase);
@@ -330,7 +356,7 @@ void ICACHE_FLASH_ATTR updateDisplayRotation() {
     uint8_t attempts = 0;
     nextDisplayMode = displayMode;
     do {
-      nextDisplayMode = (nextDisplayMode + 1) % 3;
+      nextDisplayMode = (nextDisplayMode + 1) % 4;
       attempts++;
       if (attempts >= 3) {
         nextDisplayMode = 0;
@@ -351,6 +377,7 @@ void ICACHE_FLASH_ATTR updateDisplayRotation() {
     case 0: updateDisplay(); break;
     case 1: displayWeather(); break;
     case 2: displaySunTimes(); break;
+    case 3: displayBigWeatherIcon(); break;
   }
 }
 
@@ -360,6 +387,7 @@ bool ICACHE_FLASH_ATTR isModeEnabled(uint8_t mode) {
     case 0: return true;  // Time always enabled
     case 1: return config.show_weather && weather.valid;
     case 2: return config.show_sunrise_sunset && sunTimes.lastDay != -1;
+    case 3: return config.show_weather;
   }
   return false;
 }

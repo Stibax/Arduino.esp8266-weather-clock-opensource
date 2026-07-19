@@ -216,6 +216,12 @@ Three rotating display screens (configurable interval):
    - Sunset time with ↓ arrow
    - **Daylight duration** (e.g., "Day 9h 41m")
 
+4. **Big Weather Icon Mode**
+   - 64×64 full-screen weather icon based on `weathercode`
+   - Sun, cloud/fog, rain, snow, or thunder
+   - Clean, centered layout — no text
+   - Enabled when `show_weather` is on
+
 All modes are center-aligned, rotation-aware, and gracefully handle missing data.
 
 #### 🌐 Web Interface

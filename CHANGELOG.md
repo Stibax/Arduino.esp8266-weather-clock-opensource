@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-19
+
+### Added
+- **Big weather icon screen**: new dedicated 64×64 weather icon screen in the display rotation (after sunrise/sunset). Shows a full-screen weather icon based on the current `weathercode`. Enabled when `show_weather` is toggled on.
+
+### Changed
+- **Display rotation**: now cycles through Time → Weather → Sun Times → Big Icon (4 modes instead of 3).
+
 ## [2.0.0] - 2026-07-19
 
 ### Added

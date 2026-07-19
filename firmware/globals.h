@@ -109,10 +109,10 @@ void ICACHE_FLASH_ATTR showWiFiConnecting(int step);
 void ICACHE_FLASH_ATTR showConnected();
 void ICACHE_FLASH_ATTR showIP();
 void updateDisplay();
+void ICACHE_FLASH_ATTR updateDisplayRotation();
 void ICACHE_FLASH_ATTR displayWeather();
 void ICACHE_FLASH_ATTR displaySunTimes();
-void ICACHE_FLASH_ATTR applyDissolveEffect(uint8_t hidePercent, bool withDrift);
-void ICACHE_FLASH_ATTR updateDisplayRotation();
+void ICACHE_FLASH_ATTR displayBigWeatherIcon();
 bool ICACHE_FLASH_ATTR isModeEnabled(uint8_t mode);
 
 // Weather functions (weather.cpp)

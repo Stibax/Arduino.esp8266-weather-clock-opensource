@@ -112,7 +112,6 @@ void updateDisplay();
 void ICACHE_FLASH_ATTR updateDisplayRotation();
 void ICACHE_FLASH_ATTR displayWeather();
 void ICACHE_FLASH_ATTR displaySunTimes();
-void ICACHE_FLASH_ATTR displayBigWeatherIcon();
 bool ICACHE_FLASH_ATTR isModeEnabled(uint8_t mode);
 
 // Weather functions (weather.cpp)

@@ -141,6 +141,9 @@ void ICACHE_FLASH_ATTR loadConfig() {
     if (config.night_end_hour > 23) { config.night_end_hour = 7; needsSave = true; }
     if (config.night_end_minute > 59) { config.night_end_minute = 0; needsSave = true; }
 
+    // Ensure display orientation is valid (0-3) to avoid a corrupted/black display
+    if (config.display_orientation > 3) { config.display_orientation = 2; needsSave = true; }
+
     // Ensure admin credential fields are null-terminated and initialized on first boot
     // after a firmware update that added these fields (bytes may be 0xFF or garbage from old EEPROM).
     config.admin_username[sizeof(config.admin_username) - 1] = '\0';
@@ -253,9 +256,10 @@ void setup() {
     Serial.println("OLED initialized successfully!");
   }
 
-  // Set display rotation
-  display.setRotation(config.display_orientation);
-  Serial.printf("Display rotation: %d (180 deg)\n", config.display_orientation);
+  // Ensure display is powered on and cleared after initialization
+  display.ssd1306_command(SSD1306_DISPLAYON);
+  display.clearDisplay();
+  display.display();
 
   // Show startup animation
   Serial.println("Showing startup animation...");
@@ -263,6 +267,13 @@ void setup() {
 
   // Load configuration
   loadConfig();
+
+  // Set display rotation from config (after loadConfig so EEPROM value is applied)
+  if (config.display_orientation > 3) {
+    config.display_orientation = 2;
+  }
+  display.setRotation(config.display_orientation);
+  Serial.printf("Display rotation: %d (180 deg)\n", config.display_orientation);
 
   // Setup WiFi
   setupWiFi();
@@ -293,6 +304,14 @@ void setup() {
 void loop() {
   // Handle OTA updates
   ArduinoOTA.handle();
+
+  // While an OTA update is in progress, avoid any non-essential work
+  // (display draws, weather/NTP HTTP requests) that could contend with
+  // flash writes or consume heap. The web server keeps running.
+  if (otaInProgress) {
+    server.handleClient();
+    return;
+  }
 
   // Handle web server
   server.handleClient();

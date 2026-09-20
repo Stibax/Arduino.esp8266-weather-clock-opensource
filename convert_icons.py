@@ -1,7 +1,6 @@
 from PIL import Image
 import os
 
-# Map PNG filename prefix -> array name in icons.h
 ICONS = {
     "icon_sun": "weather_sun",
     "icon_cloud_fog": "weather_cloud_fog",
@@ -13,14 +12,13 @@ ICONS = {
 ICONS_DIR = "icons"
 OUT_FILE = "firmware/icons.h"
 
-THRESHOLD = 128  # Pixels darker than this become white on OLED
+THRESHOLD = 128  # pixels darker than this become white on OLED
 
 def png_to_bytes(path):
     img = Image.open(path)
-    img = img.convert('L')  # grayscale
+    img = img.convert('RGBA')
     w, h = img.size
 
-    # Auto-crop to square from center if not already square
     if w != h:
         s = min(w, h)
         left = (w - s) // 2
@@ -33,14 +31,16 @@ def png_to_bytes(path):
     for y in range(h):
         byte = 0
         for x in range(w):
-            # Invert: dark input pixels -> bright OLED pixel
-            bit = 1 if pixels[x, y] < THRESHOLD else 0
-            # MSB first
+            r, g, b, a = pixels[x, y]
+            if a < 128:
+                bit = 0  # transparent/background -> black on OLED
+            else:
+                lum = (r + g + b) // 3
+                bit = 1 if lum < THRESHOLD else 0
             byte = (byte << 1) | bit
             if (x + 1) % 8 == 0:
                 out.append(byte)
                 byte = 0
-        # Pad remaining bits if width is not multiple of 8
         if w % 8 != 0:
             byte <<= (8 - (w % 8))
             out.append(byte)
@@ -56,6 +56,10 @@ def main():
     lines.append("#define ICONS_H")
     lines.append("")
     lines.append("#include <Arduino.h>")
+    lines.append("")
+    lines.append("// Small icon dimensions (16x16, used in weather text screen)")
+    lines.append("#define ICON_WIDTH  16")
+    lines.append("#define ICON_HEIGHT 16")
     lines.append("")
 
     for filename, array_name in ICONS.items():

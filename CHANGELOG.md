@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] - 2026-07-19
+
+### Changed
+- **Removed Big Weather Icon screen**: dropped the dedicated 64×64 weather-icon screen (`displayBigWeatherIcon`, `getWeatherIcon`, `icons.h` include) to free flash space and simplify the rotation. Display rotation is back to 3 modes: Time → Weather → Sun Times.
+
+### Notes
+- Rolls up the v2.1.1 fixes (force display ON after init, clamp `display_orientation`, correct icon alpha/transparency handling) and the v2.1.2 fix (pause display/NTP/weather work while an OTA update is in progress).
+
+## [2.1.2] - 2026-07-19
+
+### Fixed
+- **Freeze/hang during OTA update**: the display rotation (including drawing bitmaps from flash/PROGMEM) and weather/NTP HTTP requests could run concurrently with the OTA flash write, which can hang the ESP8266 due to flash read/write contention. `updateDisplayRotation()` and non-essential `loop()` work now fully pause while `otaInProgress` is true; only the web server and the OTA progress callbacks keep running.
+
+## [2.1.1] - 2026-07-19
+
+### Fixed
+- **Display stays black after boot/OTA**: explicitly force the OLED display ON after initialization, and clamp `display_orientation` to valid values (0-3) to prevent a corrupted display state.
+- **Icon transparency handling**: improved `convert_icons.py` to handle alpha channel correctly so 64×64 weather icons from PNG sources render properly instead of appearing as a white square.
+
 ## [2.1.0] - 2026-07-19
 
 ### Added

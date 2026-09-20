@@ -414,6 +414,7 @@ void ICACHE_FLASH_ATTR handleAPITime() {
 }
 
 void ICACHE_FLASH_ATTR handleAPIStatus() {
+  if (!requireAuth()) return;
   String json = "{";
   json += "\"wifi\":{";
   json += "\"ssid\":\"" + String(WiFi.SSID()) + "\",";

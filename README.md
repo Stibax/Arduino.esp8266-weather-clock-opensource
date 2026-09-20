@@ -238,7 +238,7 @@ Pages marked 🔒 require HTTP Basic authentication with the configured **admin 
 All endpoints return JSON. Endpoints marked 🔒 require HTTP Basic authentication.
 
 - `GET /api/time` - Current time *(public)*
-- `GET /api/status` - System status (WiFi, uptime, heap) *(public)*
+- `GET /api/status` - System status (WiFi, uptime, heap) 🔒
 - `GET /api/weather` - Weather + sunrise/sunset *(public)*
 - `GET /api/debug` - Detailed diagnostics 🔒
 - `GET /api/config` - Export configuration (no passwords) 🔒
@@ -798,7 +798,7 @@ Current time information.
 
 ### `GET /api/status`
 
-System status overview.
+System status overview. 🔒 Requires HTTP Basic authentication.
 
 **Response:**
 ```json

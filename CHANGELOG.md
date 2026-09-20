@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.3] - 2026-09-20
+
+### Fixed
+- **OTA updates now work with authentication enabled**: replaced the shared `requireAuth()` helper function with inline HTTP Basic auth checks in each protected handler. Keeping the auth logic in a separate helper function caused OTA updates to hang during the flash write (confirmed empirically: builds with the helper fail OTA, builds with the inline checks succeed). The protection is unchanged.
+
+### Notes
+- Protected endpoints: `/config`, `/debug`, `/test-ntp`, `/test-display`, `/api/config`, `/api/debug`, `/api/status`, `/api/eeprom-clear`, `/api/reboot`, `/api/i2c-scan`.
+- Public endpoints: `/`, `/api/time`, `/api/weather`.
+
 ## [2.2.1] - 2026-09-20
 
 ### Security

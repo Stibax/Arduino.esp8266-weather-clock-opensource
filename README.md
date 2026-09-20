@@ -226,23 +226,26 @@ All modes are center-aligned, rotation-aware, and gracefully handle missing data
 
 #### 🌐 Web Interface
 
-- `/` - Home page with live time
-- `/config` - Full configuration form
-- `/debug` - System diagnostics
-- `/update` - OTA firmware upload
+Pages marked 🔒 require HTTP Basic authentication with the configured **admin username/password** (default `admin` / `admin`).
+
+- `/` - Home page with live time *(public)*
+- `/config` - Full configuration form 🔒
+- `/debug` - System diagnostics 🔒
+- `/update` - OTA firmware upload 🔒
 
 #### 🔌 REST API
 
-All endpoints return JSON:
+All endpoints return JSON. Endpoints marked 🔒 require HTTP Basic authentication.
 
-- `GET /api/time` - Current time
-- `GET /api/status` - System status (WiFi, uptime, heap)
-- `GET /api/debug` - Detailed diagnostics
-- `GET /api/weather` - Weather + sunrise/sunset
-- `GET /api/config` - Export configuration
-- `POST /api/config` - Import configuration
-- `POST /api/eeprom-clear` - Factory reset
-- `POST /api/reboot` - Remote reboot
+- `GET /api/time` - Current time *(public)*
+- `GET /api/status` - System status (WiFi, uptime, heap) *(public)*
+- `GET /api/weather` - Weather + sunrise/sunset *(public)*
+- `GET /api/debug` - Detailed diagnostics 🔒
+- `GET /api/config` - Export configuration (no passwords) 🔒
+- `POST /api/config` - Import configuration 🔒
+- `POST /api/eeprom-clear` - Factory reset 🔒
+- `POST /api/reboot` - Remote reboot 🔒
+- `GET /api/i2c-scan` - I2C bus scan 🔒
 
 ---
 
@@ -589,11 +592,11 @@ The window can span midnight, so `23:00 → 07:00` works exactly as expected.
 ### Example: set Night Mode via API
 
 ```bash
-# Download current config
-curl http://192.168.x.x/api/config > clock-config.json
+# Download current config (requires admin auth)
+curl -u admin:admin http://192.168.x.x/api/config > clock-config.json
 
 # Edit the JSON to enable Night Mode and set a window, then upload
-curl -X POST -H "Content-Type: application/json" \
+curl -u admin:admin -X POST -H "Content-Type: application/json" \
   -d @clock-config.json \
   http://192.168.x.x/api/config
 ```
@@ -839,7 +842,9 @@ Current weather data.
 
 ### `GET /api/config`
 
-Export full configuration as JSON.
+Export full configuration as JSON. 🔒 Requires HTTP Basic authentication.
+
+> **Note**: passwords (WiFi and admin) are **not** included in the export.
 
 **Response:**
 ```json
@@ -866,16 +871,15 @@ Export full configuration as JSON.
   "night_start_minute": 0,
   "night_end_hour": 7,
   "night_end_minute": 0,
-  "admin_username": "admin",
-  "admin_password": "admin"
+  "admin_username": "admin"
 }
 ```
 
 ### `POST /api/config`
 
-Import configuration from JSON. You can use this to enable/disable Night Mode, change the schedule, or update any other setting.
+Import configuration from JSON. 🔒 Requires HTTP Basic authentication. You can use this to enable/disable Night Mode, change the schedule, or update any other setting.
 
-**Request Body**: Same structure as export response (password field optional for security).
+**Request Body**: Same structure as export response. `password` and `admin_password` are optional; empty/omitted values are ignored so stored passwords are not wiped.
 
 **Response:**
 ```json
@@ -888,7 +892,7 @@ Device automatically reboots after import.
 
 ### `POST /api/eeprom-clear`
 
-Factory reset (clears EEPROM).
+Factory reset (clears EEPROM). 🔒 Requires HTTP Basic authentication.
 
 **Response:**
 ```json
@@ -901,7 +905,7 @@ Device reboots to WiFiManager captive portal.
 
 ### `POST /api/reboot`
 
-Remote reboot.
+Remote reboot. 🔒 Requires HTTP Basic authentication.
 
 **Response:**
 ```json
@@ -925,6 +929,8 @@ Device reboots immediately.
 | **API Keys** | QWeather requires registration | Open-Meteo (no key needed) |
 | **Cloud Dependency** | Chinese servers | Direct API calls, no intermediary |
 | **Firmware Updates** | Manual FTDI only | OTA via WiFi (password-protected) |
+| **Sensitive Endpoints** | N/A | `/config`, `/debug`, `/api/config`, `/api/reboot`, `/api/eeprom-clear`, etc. require HTTP Basic auth |
+| **Password Exposure** | N/A | `/api/config` export no longer returns WiFi/admin passwords |
 | **Config Access** | No authentication | Admin password required |
 | **Code Transparency** | Closed source | Open source (you're reading it!) |
 

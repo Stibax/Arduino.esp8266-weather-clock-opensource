@@ -12,6 +12,16 @@ void ICACHE_FLASH_ATTR displaySegments(const uint8_t segments[]) {
   // Not used with OLED
 }
 
+// Check HTTP Basic auth against configured admin credentials.
+// Returns true if authorized; otherwise sends 401 and returns false.
+bool ICACHE_FLASH_ATTR requireAuth() {
+  if (server.authenticate(config.admin_username, config.admin_password)) {
+    return true;
+  }
+  server.requestAuthentication();
+  return false;
+}
+
 // PROGMEM templates for handleRoot()
 const char ROOT_HTML_HEADER[] PROGMEM =
   "<!DOCTYPE html><html><head>"
@@ -42,7 +52,6 @@ const char ROOT_HTML_FOOTER[] PROGMEM =
   "<a href='/debug' class='button'>Debug Info</a>"
   "<a href='/update' class='button'>Firmware Update</a>"
   "<a href='/api/status' class='button'>Status (JSON)</a>"
-  "<button class='button' onclick=\"if(confirm('Reboot device?')) fetch('/api/reboot', {method:'POST'}).then(()=>alert('Rebooting...'))\">Reboot</button>"
   "</div></body></html>";
 
 void ICACHE_FLASH_ATTR handleRoot() {
@@ -109,6 +118,7 @@ const char DEBUG_HTML_FOOTER[] PROGMEM =
   "</div></body></html>";
 
 void ICACHE_FLASH_ATTR handleDebug() {
+  if (!requireAuth()) return;
   char buf[200];
 
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
@@ -204,6 +214,7 @@ void ICACHE_FLASH_ATTR handleDebug() {
 }
 
 void ICACHE_FLASH_ATTR handleTestNTP() {
+  if (!requireAuth()) return;
   testInternetConnectivity();
   updateNTPTime();
 
@@ -212,6 +223,7 @@ void ICACHE_FLASH_ATTR handleTestNTP() {
 }
 
 void ICACHE_FLASH_ATTR handleTestDisplay() {
+  if (!requireAuth()) return;
   uint8_t data[] = {0xFF, 0xFF, 0xFF, 0xFF};
   displaySegments(data);
   delay(3000);
@@ -246,6 +258,7 @@ const char CONFIG_HTML_FOOTER[] PROGMEM =
   "</div></body></html>";
 
 void ICACHE_FLASH_ATTR handleConfig() {
+  if (!requireAuth()) return;
   char buf[150];
 
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
@@ -308,6 +321,7 @@ void ICACHE_FLASH_ATTR handleConfig() {
 }
 
 void ICACHE_FLASH_ATTR handleConfigSave() {
+  if (!requireAuth()) return;
   if (server.hasArg("ssid")) {
     safeStringCopy(server.arg("ssid"), config.ssid, sizeof(config.ssid));
   }
@@ -423,6 +437,7 @@ void ICACHE_FLASH_ATTR handleAPIStatus() {
 }
 
 void ICACHE_FLASH_ATTR handleAPIDebug() {
+  if (!requireAuth()) return;
   String json = "{";
   json += "\"internet_connected\":" + String(internetConnected ? "true" : "false") + ",";
   json += "\"ntp_attempts\":" + String(ntpAttempts) + ",";
@@ -453,11 +468,11 @@ void ICACHE_FLASH_ATTR handleAPIWeather() {
 }
 
 void ICACHE_FLASH_ATTR handleAPIConfigExport() {
+  if (!requireAuth()) return;
   String json = "{";
   json += "\"firmware_version\":\"" FIRMWARE_VERSION "\",";
   json += "\"magic\":\"0x" + String(config.magic, HEX) + "\",";
   json += "\"ssid\":\"" + String(config.ssid) + "\",";
-  json += "\"password\":\"" + String(config.password) + "\",";
   json += "\"timezone_offset\":" + String(config.timezone_offset) + ",";
   json += "\"dst_enabled\":" + String(config.dst_enabled ? "true" : "false") + ",";
   json += "\"brightness\":" + String(config.brightness) + ",";
@@ -479,8 +494,7 @@ void ICACHE_FLASH_ATTR handleAPIConfigExport() {
   json += "\"night_start_minute\":" + String(config.night_start_minute) + ",";
   json += "\"night_end_hour\":" + String(config.night_end_hour) + ",";
   json += "\"night_end_minute\":" + String(config.night_end_minute) + ",";
-  json += "\"admin_username\":\"" + String(config.admin_username) + "\",";
-  json += "\"admin_password\":\"" + String(config.admin_password) + "\"";
+  json += "\"admin_username\":\"" + String(config.admin_username) + "\"";
   json += "}";
 
   server.sendHeader("Content-Disposition", "attachment; filename=clock-config.json");
@@ -488,6 +502,7 @@ void ICACHE_FLASH_ATTR handleAPIConfigExport() {
 }
 
 void ICACHE_FLASH_ATTR handleAPIConfigImport() {
+  if (!requireAuth()) return;
   if (!server.hasArg("plain")) {
     server.send(400, "text/plain", "No config data received");
     return;
@@ -685,6 +700,7 @@ void ICACHE_FLASH_ATTR handleAPIConfigImport() {
 }
 
 void ICACHE_FLASH_ATTR handleEEPROMClear() {
+  if (!requireAuth()) return;
   EEPROM.begin(512);
   for (int i = 0; i < 512; i++) {
     EEPROM.write(i, 0xFF);
@@ -701,6 +717,7 @@ void ICACHE_FLASH_ATTR handleEEPROMClear() {
 }
 
 void ICACHE_FLASH_ATTR handleReboot() {
+  if (!requireAuth()) return;
   Serial.println("Reboot requested via web interface");
 
   server.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Device rebooting...\"}");
@@ -710,6 +727,7 @@ void ICACHE_FLASH_ATTR handleReboot() {
 }
 
 void ICACHE_FLASH_ATTR handleI2CScan() {
+  if (!requireAuth()) return;
   String json = "{\"i2c_scan\":{\"devices\":[";
 
   int deviceCount = 0;

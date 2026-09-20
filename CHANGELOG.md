@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-09-20
+
+### Security
+- **Authentication required on sensitive endpoints**: `/config` (GET/POST), `/debug`, `/test-ntp`, `/test-display`, `/api/config` (GET/POST), `/api/debug`, `/api/eeprom-clear`, `/api/reboot` and `/api/i2c-scan` now require HTTP Basic authentication using the configured admin username/password. Only the home page and the read-only endpoints `/api/time`, `/api/status`, `/api/weather` remain public.
+- **Passwords no longer exposed by the API**: `GET /api/config` no longer returns the WiFi password or the admin password. `POST /api/config` still accepts them (so a full restore works), but empty values are ignored so a round-trip export cannot wipe stored passwords.
+- Removed the unauthenticated **Reboot** button from the public home page.
+
+### Notes
+- The web UI now prompts for the admin credentials when opening `/config`, `/debug` or `/update`.
+
 ## [2.1.3] - 2026-07-19
 
 ### Changed

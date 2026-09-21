@@ -261,19 +261,19 @@ void setup() {
   display.clearDisplay();
   display.display();
 
-  // Show startup animation
-  Serial.println("Showing startup animation...");
-  showStartupAnimation();
-
-  // Load configuration
+  // Load configuration first, so the display rotation is applied BEFORE any drawing
   loadConfig();
 
-  // Set display rotation from config (after loadConfig so EEPROM value is applied)
+  // Set display rotation from config (must happen before the startup animation)
   if (config.display_orientation > 3) {
     config.display_orientation = 2;
   }
   display.setRotation(config.display_orientation);
-  Serial.printf("Display rotation: %d (180 deg)\n", config.display_orientation);
+  Serial.printf("Display rotation: %d\n", config.display_orientation);
+
+  // Show startup animation (now already in the correct orientation)
+  Serial.println("Showing startup animation...");
+  showStartupAnimation();
 
   // Setup WiFi
   setupWiFi();
